@@ -57,7 +57,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 async function listUser(res: Response){
-  await connect('mongodb+srv://paul:iLoveTaco@test.sami5qp.mongodb.net/mentally')
+  await connect('xxx')
   .then(() => {
     console.log(`Running on ENV = ${process.env.NODE_ENV}`);
     console.log('Connected to mongoDB.');
@@ -78,7 +78,7 @@ async function createUser(user: MentallyUser){
   const mongoUser = new UserModel(
     user
   )
-  await connect('mongodb+srv://paul:iLoveTaco@test.sami5qp.mongodb.net/mentally')
+  await connect('xxx')
   .then(() => {
     console.log(`Running on ENV = ${process.env.NODE_ENV}`);
     console.log('Connected to mongoDB.');
