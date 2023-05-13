@@ -7,7 +7,7 @@ export type UserClientService = Pick<UserService, (typeof userMethods)[number]>
 
 export const userPath = 'users'
 
-export const userMethods = [] as const
+export const userMethods = ['create'] as const
 
 export const userClient = (client: ClientApplication) => {
   const connection = client.get('connection')

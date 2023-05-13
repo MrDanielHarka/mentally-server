@@ -1,5 +1,3 @@
-import { authenticate } from '@feathersjs/authentication'
-
 import { hooks as schemaHooks } from '@feathersjs/schema'
 
 import { userResolver, userExternalResolver } from './users.schema'
@@ -16,15 +14,9 @@ export const user = (app: Application) => {
 
   app.use(userPath, userService, { methods: userMethods })
 
-  userService.create({ email: 'patient@user.mail', password: 'password' })
-
   app.service(userPath).hooks({
     around: {
-      all: [
-        schemaHooks.resolveExternal(userExternalResolver),
-        schemaHooks.resolveResult(userResolver),
-        authenticate('jwt')
-      ]
+      all: [schemaHooks.resolveExternal(userExternalResolver), schemaHooks.resolveResult(userResolver)]
     }
   })
 }
