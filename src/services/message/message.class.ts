@@ -1,12 +1,11 @@
-// For more information about this file see https://dove.feathersjs.com/guides/cli/service.class.html#database-services
 import type { Params } from '@feathersjs/feathers'
 import { MongoDBService } from '@feathersjs/mongodb'
 import type { MongoDBAdapterParams, MongoDBAdapterOptions } from '@feathersjs/mongodb'
 
 import type { Application } from '../../declarations'
-import type { Messages, MessagesData, MessagesPatch, MessagesQuery } from './message.schema'
+import type { Messages, MessagesData, MessagesQuery } from './message.schema'
 
-export type { Messages, MessagesData, MessagesPatch, MessagesQuery }
+export type { Messages, MessagesData, MessagesQuery }
 
 export interface MessagesParams extends MongoDBAdapterParams<MessagesQuery> {}
 
@@ -14,8 +13,7 @@ export interface MessagesParams extends MongoDBAdapterParams<MessagesQuery> {}
 export class MessagesService<ServiceParams extends Params = MessagesParams> extends MongoDBService<
   Messages,
   MessagesData,
-  MessagesParams,
-  MessagesPatch
+  MessagesParams
 > {}
 
 export const getOptions = (app: Application): MongoDBAdapterOptions => {

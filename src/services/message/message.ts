@@ -1,22 +1,20 @@
-// For more information about this file see https://dove.feathersjs.com/guides/cli/service.html
 import { authenticate } from '@feathersjs/authentication'
 
 import { hooks as schemaHooks } from '@feathersjs/schema'
 
 import {
   messagesDataValidator,
-  messagesPatchValidator,
   messagesQueryValidator,
   messagesResolver,
   messagesExternalResolver,
   messagesDataResolver,
-  messagesPatchResolver,
   messagesQueryResolver
 } from './message.schema'
 
 import type { Application } from '../../declarations'
 import { MessagesService, getOptions } from './message.class'
 import { messagesPath, messagesMethods } from './message.shared'
+import { messageBot } from '../../hooks/message-bot'
 
 export * from './message.class'
 export * from './message.schema'
@@ -30,6 +28,7 @@ export const messages = (app: Application) => {
     // You can add additional custom events to be sent to clients here
     events: []
   })
+
   // Initialize hooks
   app.service(messagesPath).hooks({
     around: {
@@ -44,23 +43,11 @@ export const messages = (app: Application) => {
         schemaHooks.validateQuery(messagesQueryValidator),
         schemaHooks.resolveQuery(messagesQueryResolver)
       ],
-      find: [],
-      get: [],
-      create: [
-        schemaHooks.validateData(messagesDataValidator),
-        schemaHooks.resolveData(messagesDataResolver)
-      ],
-      patch: [
-        schemaHooks.validateData(messagesPatchValidator),
-        schemaHooks.resolveData(messagesPatchResolver)
-      ],
-      remove: []
+      create: [schemaHooks.validateData(messagesDataValidator), schemaHooks.resolveData(messagesDataResolver)]
     },
     after: {
-      all: []
-    },
-    error: {
-      all: []
+      all: [],
+      create: [messageBot]
     }
   })
 }

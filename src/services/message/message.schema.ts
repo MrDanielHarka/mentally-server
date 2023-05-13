@@ -1,23 +1,32 @@
 // // For more information about this file see https://dove.feathersjs.com/guides/cli/service.schemas.html
-import { resolve } from '@feathersjs/schema'
+import { resolve, virtual } from '@feathersjs/schema'
 import { Type, getValidator, querySyntax } from '@feathersjs/typebox'
 import { ObjectIdSchema } from '@feathersjs/typebox'
 import type { Static } from '@feathersjs/typebox'
 
 import type { HookContext } from '../../declarations'
 import { dataValidator, queryValidator } from '../../validators'
+import { userSchema } from '../users/users.schema'
 
 // Main data model schema
 export const messagesSchema = Type.Object(
   {
     _id: ObjectIdSchema(),
-    text: Type.String()
+    text: Type.String(),
+    createdAt: Type.Number(),
+    userId: Type.String({ objectid: true }),
+    user: Type.Ref(userSchema)
   },
   { $id: 'Messages', additionalProperties: false }
 )
 export type Messages = Static<typeof messagesSchema>
 export const messagesValidator = getValidator(messagesSchema, dataValidator)
-export const messagesResolver = resolve<Messages, HookContext>({})
+export const messagesResolver = resolve<Messages, HookContext>({
+  user: virtual(async (message, context) => {
+    // Associate the user that sent the message
+    return context.app.service('users').get(message.userId)
+  })
+})
 
 export const messagesExternalResolver = resolve<Messages, HookContext>({})
 
@@ -27,18 +36,18 @@ export const messagesDataSchema = Type.Pick(messagesSchema, ['text'], {
 })
 export type MessagesData = Static<typeof messagesDataSchema>
 export const messagesDataValidator = getValidator(messagesDataSchema, dataValidator)
-export const messagesDataResolver = resolve<Messages, HookContext>({})
-
-// Schema for updating existing entries
-export const messagesPatchSchema = Type.Partial(messagesSchema, {
-  $id: 'MessagesPatch'
+export const messagesDataResolver = resolve<Messages, HookContext>({
+  userId: async (_value, _message, context) => {
+    // Associate the record with the id of the authenticated user
+    return context.params.user._id
+  },
+  createdAt: async () => {
+    return Date.now()
+  }
 })
-export type MessagesPatch = Static<typeof messagesPatchSchema>
-export const messagesPatchValidator = getValidator(messagesPatchSchema, dataValidator)
-export const messagesPatchResolver = resolve<Messages, HookContext>({})
 
 // Schema for allowed query properties
-export const messagesQueryProperties = Type.Pick(messagesSchema, ['_id', 'text'])
+export const messagesQueryProperties = Type.Pick(messagesSchema, ['_id', 'text', 'userId'])
 export const messagesQuerySchema = Type.Intersect(
   [
     querySyntax(messagesQueryProperties),
@@ -49,4 +58,14 @@ export const messagesQuerySchema = Type.Intersect(
 )
 export type MessagesQuery = Static<typeof messagesQuerySchema>
 export const messagesQueryValidator = getValidator(messagesQuerySchema, queryValidator)
-export const messagesQueryResolver = resolve<MessagesQuery, HookContext>({})
+export const messagesQueryResolver = resolve<MessagesQuery, HookContext>({
+  userId: async (value, user, context) => {
+    // We want to be able to find all messages but
+    // only let a user modify their own messages otherwise
+    if (context.params.user && context.method !== 'find') {
+      return context.params.user._id
+    }
+
+    return value
+  }
+})
