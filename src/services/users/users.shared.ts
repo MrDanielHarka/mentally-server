@@ -1,13 +1,15 @@
+import { Params } from '@feathersjs/feathers'
 import type { ClientApplication } from '../../client'
 import type { User, UserData, UserService } from './users.class'
+import { UserQuery } from './users.schema'
 
 export type { User, UserData }
 
-export type UserClientService = Pick<UserService, (typeof userMethods)[number]>
+export type UserClientService = Pick<UserService<Params<UserQuery>>, (typeof userMethods)[number]>
 
 export const userPath = 'users'
 
-export const userMethods = ['create'] as const
+export const userMethods = ['find', 'get', 'create', 'patch', 'remove'] as const
 
 export const userClient = (client: ClientApplication) => {
   const connection = client.get('connection')
