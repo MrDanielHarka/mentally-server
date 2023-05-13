@@ -19,7 +19,7 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
 });
 
-const UserModel = model<IUser>('User', userSchema);
+const UserModel = model<IUser>('users', userSchema);
 
 
 type MentallyUser = {
@@ -56,15 +56,37 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello, Express!');
 });
 
+async function listUser(res: Response){
+  await connect('mongodb+srv://paul:iLoveTaco@test.sami5qp.mongodb.net/mentally')
+  .then(() => {
+    console.log(`Running on ENV = ${process.env.NODE_ENV}`);
+    console.log('Connected to mongoDB.');
+  })
+  .catch((error) => {
+    console.log('Unable to connect.');
+    console.log(error);
+  });
+  const users = await UserModel.find({});
+  res.send(users)
+}
+
 app.get('/user', (req: Request, res: Response) => {
-  res.send(users);
+  listUser(res)
 });
 
 async function createUser(user: MentallyUser){
   const mongoUser = new UserModel(
     user
   )
-  await connect('mongodb+srv://paul:iLoveTaco@test.sami5qp.mongodb.net/')
+  await connect('mongodb+srv://paul:iLoveTaco@test.sami5qp.mongodb.net/mentally')
+  .then(() => {
+    console.log(`Running on ENV = ${process.env.NODE_ENV}`);
+    console.log('Connected to mongoDB.');
+  })
+  .catch((error) => {
+    console.log('Unable to connect.');
+    console.log(error);
+  });
   await mongoUser.save();
 }
 
@@ -78,7 +100,7 @@ app.post('/user', (req: Request, res: Response) => {
     }
 
     users.push(user)
-    createUser(user).then(() => res.send(email))
+    createUser(user).then((data) => res.send(data))
     .catch(err => res.send(err))
   });
 
