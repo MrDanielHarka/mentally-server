@@ -5,10 +5,10 @@ import authenticationClient from '@feathersjs/authentication-client'
 import type { AuthenticationClientOptions } from '@feathersjs/authentication-client'
 
 import { messagesClient } from './services/message/message.shared'
-export type { Messages, MessagesData, MessagesQuery, MessagesPatch } from './services/message/message.shared'
+export type { Messages, MessagesData, MessagesQuery } from './services/message/message.shared'
 
 import { userClient } from './services/users/users.shared'
-export type { User, UserData, UserQuery, UserPatch } from './services/users/users.shared'
+export type { User, UserData } from './services/users/users.shared'
 
 export interface Configuration {
   connection: TransportConnection<ServiceTypes>
