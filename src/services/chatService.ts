@@ -1,4 +1,5 @@
 import { io } from '../app.js'
+import { Patient, Therapist, User, patient, therapist, users } from '../user/users.js'
 import { ChatBot } from './chatBot.js'
 
 export interface ChatMessage {
@@ -8,44 +9,115 @@ export interface ChatMessage {
   createdAt: Date
 }
 
+export interface ChatSession {
+  readonly id: string
+
+  patient: {
+    readonly id: string
+    online: boolean
+  }
+  therapist: {
+    readonly id: string
+    online: boolean
+  }
+
+  readonly messages: ChatMessage[]
+}
+
 export class ChatService {
-  private chatBot = new ChatBot()
+  private readonly chatBot = new ChatBot()
 
-  private messages: ChatMessage[] = [
-    {
-      id: '1',
-      text: 'Hey, I just wanted to check in - how have you been feeling lately? 😊',
-      userId: null,
-      createdAt: new Date()
-    }
-  ]
+  private readonly sessions: ChatSession[] = []
 
-  async sendMessage(userId: string, text: string) {
-    this.emitMessage(userId, text)
-
-    if (text.includes('@bot')) {
-      console.log("Forwarding message to bot")
-
-      const response = await this.chatBot.sendMessage(text.replace('@bot', ''), userId)
-      this.emitMessage(null, response)
+  async connectToSession(user: User) {
+    if (user.role == 'patient') {
+      const session =
+        this.sessions.find((session) => session.patient.id === user.id) ??
+        (await this.createSession(user as Patient))
+      session.patient.online = true
+    } else {
+      const session = this.getSessionForTherapist(user as Therapist)
+      session.therapist.online = true
     }
   }
 
-  private emitMessage(userId: string | null, text: string) {
+  async disconnectFromSession(user: User) {
+    if (user.role == 'patient') {
+      const session = this.getSessionForPatient(user as Patient)
+      session.patient.online = false
+    } else {
+      const session = this.getSessionForTherapist(user as Therapist)
+      session.therapist.online = false
+    }
+  }
+
+  async sendMessage(user: User, text: string) {
+    const session = this.getSessionForUser(user)
+
+    this.emitMessage(session, user, text)
+
+    const response = await this.chatBot.forwardMessage(text, user.role, session.therapist.online, session.id)
+    if (response) {
+      this.emitMessage(session, null, response)
+    }
+  }
+
+  async getMessages(): Promise<ChatMessage[]> {
+    return this.sessions.map((session) => session.messages).flat()
+  }
+
+  private emitMessage(session: ChatSession, user: User | null, text: string) {
     const message = {
-      id: `${this.messages.length + 1}`,
-      userId,
+      id: `${session.messages.length + 1}`,
+      userId: user?.id || null,
       text,
       createdAt: new Date()
     }
-    this.messages.push(message)
+    session.messages.push(message)
 
     io.emit('message', message)
 
-    console.log(`message ${text} from user ${userId || 'bot'}`)
+    console.log(`message ${text} from ${user?.firstName || 'bot'}`)
   }
 
-  async getMessages() {
-    return this.messages
+  private getSessionForUser(user: User) {
+    return user.role === 'patient'
+      ? this.getSessionForPatient(user as Patient)
+      : this.getSessionForTherapist(user as Therapist)
+  }
+
+  private getSessionForTherapist(user: Therapist) {
+    const session = this.sessions.find((session) => session.therapist.id === user.id)
+    if (!session) {
+      throw new Error('Session not found')
+    }
+
+    return session
+  }
+
+  private getSessionForPatient(user: Patient): ChatSession {
+    const session = this.sessions.find((session) => session.patient.id === user.id)
+    if (!session) {
+      throw new Error('Session not found')
+    }
+
+    return session
+  }
+
+  private async createSession(user: Patient): Promise<ChatSession> {
+    console.log('Starting new session')
+
+    const session = {
+      id: `${this.sessions.length + 1}`,
+      patient: { id: user.id, online: true },
+      therapist: { id: user.therapistId, online: false },
+      messages: []
+    }
+    this.sessions.push(session)
+
+    const firstMessage = await this.chatBot.startSession(session.id)
+    this.emitMessage(session, null, firstMessage)
+
+    return session
   }
 }
