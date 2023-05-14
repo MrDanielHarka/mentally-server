@@ -16,7 +16,7 @@ export class ChatService {
       id: '1',
       text: 'Hey, I just wanted to check in - how have you been feeling lately? 😊',
       userId: null,
-      createdAt: new Date(2023, 5, 13, 12, 45)
+      createdAt: new Date()
     }
   ]
 
