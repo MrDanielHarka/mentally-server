@@ -1,11 +1,14 @@
-import { app } from './app'
-import { logger } from './logger'
+import { server } from './app.js'
+import { ChatBot } from './services/chatBot.js'
 
-const port = app.get('port')
-const host = app.get('host')
+import './endpoints/index.js'
 
-process.on('unhandledRejection', (reason) => logger.error('Unhandled Rejection %O', reason))
+async function main() {
+  // await ChatBot.instance.init()
 
-app.listen(port).then(() => {
-  logger.info(`Feathers app listening on http://${host}:${port}`)
-})
+  server.listen(3000, () => {
+    console.log('listening on http://localhost:3000')
+  })
+}
+
+main()
