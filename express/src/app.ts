@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Schema, model, connect } from 'mongoose';
-
+import { config } from 'dotenv';
+config();
 
 const app = express();
 const port = 3000;
@@ -21,7 +22,6 @@ const userSchema = new Schema<IUser>({
 
 const UserModel = model<IUser>('users', userSchema);
 
-
 type MentallyUser = {
   userId: number
   email: string
@@ -33,7 +33,6 @@ type Message = {
   text: string
   type: string
 }
-
 
 const users: MentallyUser[] = [
   {
@@ -57,7 +56,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 async function listUser(res: Response){
-  await connect('xxx')
+  await connect(`${process.env.DATABASE_URL}`)
   .then(() => {
     console.log(`Running on ENV = ${process.env.NODE_ENV}`);
     console.log('Connected to mongoDB.');
@@ -68,7 +67,7 @@ async function listUser(res: Response){
   });
   const users = await UserModel.find({});
   res.send(users)
-}
+} 
 
 app.get('/user', (req: Request, res: Response) => {
   listUser(res)
@@ -78,7 +77,7 @@ async function createUser(user: MentallyUser){
   const mongoUser = new UserModel(
     user
   )
-  await connect('xxx')
+  await connect(`${process.env.DATABASE_URL}`)
   .then(() => {
     console.log(`Running on ENV = ${process.env.NODE_ENV}`);
     console.log('Connected to mongoDB.');
@@ -139,7 +138,7 @@ app.post('/user', (req: Request, res: Response) => {
       invokeAssistant(text)
     }
     
-
+ 
     res.send("message send");
   });
 
